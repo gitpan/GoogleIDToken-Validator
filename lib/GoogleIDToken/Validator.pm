@@ -18,50 +18,48 @@ GoogleIDToken::Validator - allows you to verify on server side Google Access Tok
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
 Perl implamentation of Google Access Token verification.
 Details can be found on android developers blog: 
-http://android-developers.blogspot.com/2013/01/verifying-back-end-calls-from-android.html
+L<http://android-developers.blogspot.com/2013/01/verifying-back-end-calls-from-android.html>
 
 This module ONLY:
-1. Verifies that this token signed by google certificates.
-2. Verifies that this token was received by mobile application with given Client IDs and for given web application Client ID.
+=item * Verifies that this token signed by google certificates.
+=item * Verifies that this token was received by mobile application with given Client IDs and for given web application Client ID.
 
 Nothing more. Nothing connected with authorization on any of Google APIs etc etc
 
-Common use:
+    use GoogleIDToken::Validator;
 
-use GoogleIDToken::Validator;
+    my $validator = GoogleIDToken::Validator->new(
+	#do_not_cache_certs => 1, 					# will download google certificates from web every call of verify
+        #google_certs_url	=> 'https://some.domain.com/certs',	# in case they change URL in the future... default is: https://www.googleapis.com/oauth2/v1/certs
+	certs_cache_file 	=> '/tmp/google.crt',			# will cache certs in this file for faster verify if you are using CGI
+	web_client_id 	=> '111222333444.apps.googleusercontent.com',	# Your Client ID for web applications received in Google APIs console
+        app_client_ids 	=> [								# Array of your Client ID for installed applications received in Google APIs console
+	    '777777777777-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com',	# for exm. your production keystore ID
+	    '888888888888-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com'	# and your eclipse debug keystore ID
+	]
+    );
 
-my $validator = GoogleIDToken::Validator->new(
-    #do_not_cache_certs => 1, 					# will download google certificates from web every call of verify
-    #google_certs_url	=> 'https://some.domain.com/certs',	# in case they change URL in the future... default is: https://www.googleapis.com/oauth2/v1/certs
-    certs_cache_file 	=> '/tmp/google.crt',			# will cache certs in this file for faster verify if you are using CGI
-    web_client_id 	=> '111222333444.apps.googleusercontent.com',	# Your Client ID for web applications received in Google APIs console
-    app_client_ids 	=> [								# Array of your Client ID for installed applications received in Google APIs console
-	'777777777777-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com',	# for exm. your production keystore ID
-	'888888888888-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com'	# and your eclipse debug keystore ID
-    ]
-);
+    # web_client_id and at least one of app_client_ids are required
 
-# web_client_id and at least one of app_client_ids are required
+    # get the token from your mobile app somehow...
+    my $token =  'eyJhbG..............very.long.base64.encoded.access.token............';
 
-# get the token from your mobile app somehow...
-my $token =  'eyJhbG..............very.long.base64.encoded.access.token............';
-
-my $payload = $validator->verify($token);
-if($payload) {
-    # token is OK, lets see what we got
-    use Data::Dumper;
-    print "payload: ".Dumper($payload);
-}
+    my $payload = $validator->verify($token);
+    if($payload) {
+	# token is OK, lets see what we have got
+        use Data::Dumper;
+	print "payload: ".Dumper($payload);
+    }
 
 =cut
 
